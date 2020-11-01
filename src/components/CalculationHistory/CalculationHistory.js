@@ -5,14 +5,14 @@ export default function CalculationHistory() {
   const { state, dispatch } = useContext(Context);
   const [history, setHistory] = useState([]);
 
-  // update history only if state length is 10
+  // updates history only if state length is 10
   useEffect(() => {
     if (state.calculationHistory.length === 10) {
       setHistory([...state.calculationHistory]);
     }
   }, [state]);
 
-  // remove oldest calculation from state to prepare for incoming one(s)
+  // removes oldest calculation from state to prepare for incoming one(s)
   useEffect(() => {
     if (history.length === 10) {
       dispatch({ type: `PREP_HISTORY` });
@@ -21,8 +21,8 @@ export default function CalculationHistory() {
 
   return (
     <div id="history-container">
-      <h3>HISTORY</h3>
-      <ul>
+      <h3>RECENT</h3>
+      <ul id="history">
         {history.map((item, i) => (
           <li key={i}>{item}</li>
         ))}
