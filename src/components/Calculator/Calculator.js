@@ -1,20 +1,36 @@
 import CalculatorButton from "../CalculatorButton/CalculatorButton";
 import { buttonList } from "../CalculatorButton/ButtonList";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { db } from "../../firebase";
 
 export default function Calculator() {
+  const [calculationResult, setCalculationResult]     = useState("");
   const [currentNumber, setCurrentNumber]             = useState("0");
   const [equation, setEquation]                       = useState(null);
   const [firstNumber, setFirstNumber]                 = useState(null);
   const [operator, setOperator]                       = useState(null);
+  const [showResult, setShowResult]                   = useState(false);
   const [waitForSecondNumber, setWaitForSecondNumber] = useState(false);
+
+  // renders calculation result or current number to DOM
+  useEffect(() => {
+    if (calculationResult) return setShowResult(true);
+    if (!calculationResult) return setShowResult(false);
+  }, [calculationResult]);
+
+  // POSTs calculation to database when equation changes
+  useEffect(() => {
+    if (equation) updateDatabase(equation);
+  }, [equation]);
 
   // clears display & reset variables when AC button is clicked
   const clearDisplay = () => {
+    setCalculationResult("");
     setCurrentNumber("0");
     setEquation(null);
     setFirstNumber(null);
     setOperator(null);
+    setShowResult(false);
     setWaitForSecondNumber(false);
   };
 
@@ -60,14 +76,15 @@ export default function Calculator() {
       setCurrentNumber("0");
     } else if (operator) {
       const result = doCalculation(operator, firstNumber, +currentNumber);
-      setCurrentNumber(String(result));
+      setCalculationResult(String(result));
       setFirstNumber(result);
-      // updateDatabase(equation);
+      setCurrentNumber("0");
     }
     setOperator(op);
     setWaitForSecondNumber(true);
   };
 
+  // triggers when number button is clicked
   const getNumber = (num) => {
     if (waitForSecondNumber) {
       updateCurrentNumber(num);
@@ -75,8 +92,10 @@ export default function Calculator() {
     } else {
       updateCurrentNumber(num);
     }
+    setCalculationResult("");
   };
 
+  // passes click handler function to the button component based on class name
   const passClickHandlerAsProps = (type, val) => {
     switch (type) {
       case "operator":
@@ -92,6 +111,7 @@ export default function Calculator() {
     }
   };
 
+  // updates current number and display
   const updateCurrentNumber = (num) => {
     if (currentNumber === "0") {
       setCurrentNumber(num);
@@ -100,13 +120,21 @@ export default function Calculator() {
     }
   };
 
+  // POSTs incoming entry to database with timestamp as key
+  const updateDatabase = (incomingEntry) => {
+    const timestamp = Date.now();
+    db.ref("/history").update({
+      [timestamp]: incomingEntry,
+    });
+  };
+
   return (
     <div id="calc-container">
       <div id="calc">
         <input
           type="text"
           id="calc-screen"
-          value={currentNumber}
+          value={showResult ? calculationResult : currentNumber}
           placeholder="0"
           disabled
         />
