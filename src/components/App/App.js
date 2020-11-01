@@ -10,12 +10,14 @@ const initialState = {
   calculationHistory: [],
 };
 
+// holds global states
 const contextReducer = (state, action) => {
   switch (action.type) {
     case `SET_HISTORY`:
       return { calculationHistory: [action.payload, ...state.calculationHistory], };
     case `PREP_HISTORY`:
-      const newArray = state.calculationHistory.reverse().slice(1).reverse();
+    // remove oldest calculation from state to prepare for incoming one(s)
+    const newArray = state.calculationHistory.reverse().slice(1).reverse();
       return { calculationHistory: newArray, };
     default:
       return initialState;
@@ -25,6 +27,7 @@ const contextReducer = (state, action) => {
 export default function App() {
   const [state, dispatch] = useReducer(contextReducer, initialState);
 
+  // database listener
   useEffect(() => {
     db.ref("/history")
       .orderByKey()
